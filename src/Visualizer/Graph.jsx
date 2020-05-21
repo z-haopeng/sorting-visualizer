@@ -6,9 +6,9 @@ import Typography from '@material-ui/core/Typography';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import InputLabel from '@material-ui/core/InputLabel';
+import GitHubIcon from '@material-ui/icons/GitHub';
 
 import './Graph.css'
-
 
 const BAR_COLOR = '#81d4fa';
 
@@ -19,14 +19,17 @@ const MERGE_SORT = 2;
 export default class Graph extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { array: [], numRows: 64, drawerOpen: false};
+        this.state = { array: [], numRows: 64, drawerOpen: false, algorithm: BUBBLE_SORT};
     }
     
     render() {
         return( 
             <div>
-                <Box display='flex' flexDirection='column' mx='auto' maxWidth='99%'>
-                    <Box mt={1} display='flex' justifyContent='center'> 
+                <Box display='flex' flexDirection='column' mx='auto'>
+                    <Box mt={1} display='flex' justifyContent='center'>
+                        <Button variant='outlined' startIcon={<GitHubIcon />} href='https://github.com/z-haopeng/sorting-visualizer'>View On GitHub</Button>
+                    </Box>
+                    <Box display='flex' justifyContent='center'> 
                         {/*Button to re-randomize numbers*/}
                         <Box p={1}>
                             <Button variant='contained' color='primary' onClick={() => this.resetArray()}>Randomize Set</Button>
@@ -37,11 +40,8 @@ export default class Graph extends React.Component {
                         </Box>     
                     </Box>
                     <Box mx='auto' justifyContent='center'>
-                        <InputLabel id='algorithmLabel'>Algorithm</InputLabel>
-                        <Select
-                            labelId='algorithmLabel'
-                            defaultValue={BUBBLE_SORT}
-                        >
+                        <InputLabel shrink id='algorithmLabel'>Algorithm</InputLabel>
+                        <Select labelId='algorithmLabel' defaultValue={BUBBLE_SORT} onChange={(event) => this.changeAlgorithm(event)}>
                             <MenuItem value={BUBBLE_SORT}>Bubble Sort</MenuItem>
                             <MenuItem value={INSERTION_SORT}>Insertion Sort</MenuItem>
                             <MenuItem value={MERGE_SORT}>Merge Sort</MenuItem>
@@ -50,7 +50,7 @@ export default class Graph extends React.Component {
                     {/*Slider to control how many numbers to sort*/}
                     <Box className='numberSlider' mx='auto' m={1}>
                         <Typography align='left'>Size of Set</Typography>
-                        <Slider min={8} max={256} step={8} defaultValue={64} valueLabelDisplay='auto' marks
+                        <Slider min={8} max={256} step={8} defaultValue={64} valueLabelDisplay='auto'
                         onChangeCommitted={ (e, val) => {
                             this.setState({numRows: val});
                             this.resetArray();
@@ -59,15 +59,23 @@ export default class Graph extends React.Component {
                 </Box>             
                 <Box className="barContainer" mx='auto'>
                     {this.state.array.map((num, index) => (
-                        <Box
-                            display='inline-block'
-                            width={1/this.state.numRows} 
-                            height={num/1024}
-                            key={index} 
-                            style={{
-                                verticalAlign: 'top',
-                                backgroundColor: BAR_COLOR
-                        }}></Box>
+                        <Box 
+                        display='inline-block'
+                        width={1/this.state.numRows} 
+                        key={index}
+                        height='100%'
+                        position='relative'
+                        >
+                            <Box
+                                position='absolute'
+                                bottom={0}
+                                height={num/1024}
+                                width='100%'
+                                style={{
+
+                                    backgroundColor: BAR_COLOR
+                            }}></Box>
+                        </Box>
                     ))}
                 </Box>
             </div>
@@ -76,6 +84,10 @@ export default class Graph extends React.Component {
 
     componentDidMount() {
         this.resetArray();
+    }
+
+    changeAlgorithm(event) {
+        this.setState({algorithm: event.target.value});
     }
 
     resetArray() {

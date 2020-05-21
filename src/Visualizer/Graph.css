@@ -1,7 +1,7 @@
 .barContainer {
     height: 50vh;
     width: 1024px;
-    max-width: 99vw;
+    max-width: 100%;
 }
 .numberSlider {
     width: 768px;

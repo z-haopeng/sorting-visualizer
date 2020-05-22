@@ -199,6 +199,7 @@ export default class Graph extends React.Component {
         switch(this.state.algorithm) {
             default:
                 console.log("Oopsy doopsy that hasn't been implemented yet");
+                this.setState({sorting: false});
                 break;
             case BUBBLE_SORT:
                 let bubbleAnimations = getBubbleSortAnimations(this.state.array);

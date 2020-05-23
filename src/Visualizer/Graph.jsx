@@ -10,11 +10,13 @@ import GitHubIcon from '@material-ui/icons/GitHub';
 
 import {getBubbleSortAnimations} from '../Algorithms/BubbleSort';
 import {getInsertionSortAnimations} from '../Algorithms/InsertionSort';
+import {getMergeSortAnimations} from '../Algorithms/MergeSort';
 
-const BAR_COLOR = 'rgb(129, 212, 250)';
-const COMPARISON_COLOR = 'rgb(244, 67, 54)';
-const SORTED_COLOR = 'rgb(0, 230, 118)';
+export const BAR_COLOR = 'rgb(129, 212, 250)';
+export const COMPARISON_COLOR = 'rgb(156, 39, 176)';
+export const SORTED_COLOR = 'rgb(0, 200, 83)';
 const FINAL_PASS_DELAY = 1.5;
+const ANIMATIONS_PER_MS = 25;
 
 const BUBBLE_SORT = 0;
 const INSERTION_SORT = 1;
@@ -209,6 +211,10 @@ export default class Graph extends React.Component {
                 let insertionAnimations = getInsertionSortAnimations(this.state.array);
                 this.animateWithSwap(insertionAnimations, arrayOfBars, 1, 1.5);
                 break;
+            case MERGE_SORT:
+                let mergeAnimations = getMergeSortAnimations(this.state.array);
+                this.animateWithMerge(mergeAnimations, arrayOfBars, 2, 1);
+                break;
         }
     }
 
@@ -218,7 +224,7 @@ export default class Graph extends React.Component {
     animateWithSwap(animations, arrayOfBars, delay, exponent) {
         let powerFactor = Math.pow(256/this.state.numRows, exponent);
         let scaleFactor = 256/this.state.numRows;
-        let processingTime = animations.length/25;
+        let processingTime = animations.length/ANIMATIONS_PER_MS;
 
         for(let i = 0; i < animations.length; i++) {
             // Indices of bars to process and whether to toggle color or swap
@@ -257,6 +263,58 @@ export default class Graph extends React.Component {
             this.setState({sorting: false});
             timeouts = [];
         }, (arrayOfBars.length*FINAL_PASS_DELAY*scaleFactor) + (animations.length*delay*powerFactor) + processingTime));
+    }
+
+    animateWithMerge(animations, arrayOfBars, delay, exponent) {
+        let processingTime = animations.length/ANIMATIONS_PER_MS;
+        let scaleFactor = 256/this.state.numRows;
+        let timeFactor = Math.pow(scaleFactor * Math.log(256) / Math.log(this.state.numRows), exponent);
+
+        for(let i = 0; i < animations.length; i++) {
+            let [index, changes, toggleColor] = animations[i];
+
+            if(toggleColor) {
+                timeouts.push(setTimeout(() => {
+                    arrayOfBars[index].style.backgroundColor = changes;
+                }, i*timeFactor*delay + processingTime));
+            } else {
+                timeouts.push(setTimeout(() => {
+                    arrayOfBars[index].style.height = `${changes*100/1024}%`;
+                }, i*timeFactor*delay + processingTime));
+            }
+            /*
+            if(i % 3 === 0) {
+                timeouts.push(setTimeout(() => {
+                    let [barOneIdx, barTwoIdx] = animations[i];
+                    arrayOfBars[barOneIdx].style.backgroundColor = COMPARISON_COLOR;
+                    arrayOfBars[barTwoIdx].style.backgroundColor = COMPARISON_COLOR;
+                }, i*timeFactor*delay + processingTime));
+            } else if(i % 3 === 1) {
+                timeouts.push(setTimeout(() => {
+                    let [barOneIdx, barTwoIdx] = animations[i];
+                    arrayOfBars[barOneIdx].style.backgroundColor = BAR_COLOR;
+                    arrayOfBars[barTwoIdx].style.backgroundColor = BAR_COLOR;
+                }, i*timeFactor*delay + processingTime));
+            } else {
+                timeouts.push(setTimeout(() => {
+                    let [barIdx, newHeight] = animations[i];
+                    arrayOfBars[barIdx].style.height = `${newHeight/10.24}%`;
+                }, i*timeFactor*delay + processingTime));
+            }*/
+        }
+
+        // Final sweep of green over sorted array
+        for(let i = 0; i < arrayOfBars.length; i++) {
+            timeouts.push(setTimeout(() => {
+                arrayOfBars[i].style.backgroundColor = SORTED_COLOR;
+            }, i*FINAL_PASS_DELAY*scaleFactor + animations.length*delay*timeFactor + processingTime));
+        }
+        // Re-enable buttons
+        timeouts.push(setTimeout(() => {
+            this.state.array.sort((a, b) => a - b);
+            this.setState({sorting: false});
+            timeouts = [];
+        }, arrayOfBars.length*FINAL_PASS_DELAY*scaleFactor + animations.length*delay*timeFactor + processingTime));
     }
 }
 

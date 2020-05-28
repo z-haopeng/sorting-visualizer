@@ -11,16 +11,23 @@ import GitHubIcon from '@material-ui/icons/GitHub';
 import {getBubbleSortAnimations} from '../Algorithms/BubbleSort';
 import {getInsertionSortAnimations} from '../Algorithms/InsertionSort';
 import {getMergeSortAnimations} from '../Algorithms/MergeSort';
+import {getQuickSortAnimations, getQuickSortArray} from '../Algorithms/QuickSort';
 
 export const BAR_COLOR = 'rgb(129, 212, 250)';
 export const COMPARISON_COLOR = 'rgb(156, 39, 176)';
 export const SORTED_COLOR = 'rgb(0, 200, 83)';
 const FINAL_PASS_DELAY = 1.5;
 const ANIMATIONS_PER_MS = 25;
+const MAX_ROWS = 256;
+const MAX_HEIGHT = 1024;
 
 const BUBBLE_SORT = 0;
 const INSERTION_SORT = 1;
 const MERGE_SORT = 2;
+const QUICK_SORT = 3;
+
+const N_SQUARED = -1;
+const N_LOG_N = -2;
 
 var timeouts = [];
 
@@ -54,6 +61,7 @@ export default class Graph extends React.Component {
                                     <MenuItem value={BUBBLE_SORT}>Bubble Sort</MenuItem>
                                     <MenuItem value={INSERTION_SORT}>Insertion Sort</MenuItem>
                                     <MenuItem value={MERGE_SORT}>Merge Sort</MenuItem>
+                                    <MenuItem value={QUICK_SORT}>Quick Sort</MenuItem>
                                 </Select>
                             </Box>
                             {/*Button to initiate sort*/}
@@ -64,7 +72,7 @@ export default class Graph extends React.Component {
                         {/*Slider to control how many numbers to sort*/}
                         <Box mx='auto' m={1} width='512px' maxWidth='75%'>
                             <Typography align='left'>Size of Array</Typography>
-                            <Slider disabled={this.state.sorting} min={8} max={256} step={8} defaultValue={64} valueLabelDisplay='auto'
+                            <Slider disabled={this.state.sorting} min={8} max={MAX_ROWS} step={8} defaultValue={64} valueLabelDisplay='auto'
                             onChangeCommitted={ (e, val) => {
                                 this.setState({numRows: val});
                                 this.resetArray();
@@ -118,13 +126,14 @@ export default class Graph extends React.Component {
                                 <MenuItem value={BUBBLE_SORT}>Bubble Sort</MenuItem>
                                 <MenuItem value={INSERTION_SORT}>Insertion Sort</MenuItem>
                                 <MenuItem value={MERGE_SORT}>Merge Sort</MenuItem>
+                                <MenuItem value={QUICK_SORT}>Quick Sort</MenuItem>
                             </Select>
                         </Box>
                     </Box>
                     {/*Slider to control how many numbers to sort*/}
                     <Box mx='auto' m={1} width='512px' maxWidth='75%'>
                         <Typography align='left'>Size of Array</Typography>
-                        <Slider disabled={this.state.sorting} min={8} max={256} step={8} defaultValue={64} valueLabelDisplay='auto'
+                        <Slider disabled={this.state.sorting} min={8} max={MAX_ROWS} step={8} defaultValue={64} valueLabelDisplay='auto'
                         onChangeCommitted={ (e, val) => {
                             this.setState({numRows: val});
                             this.resetArray();
@@ -146,7 +155,7 @@ export default class Graph extends React.Component {
                                 bottom={0}
                                 width='100%'
                                 style={{
-                                    height: `${num/10.24}%`,
+                                    height: `${num/1024*100}%`,
                                     backgroundColor: BAR_COLOR
                                 }}></Box>
                         </Box>
@@ -213,7 +222,12 @@ export default class Graph extends React.Component {
                 break;
             case MERGE_SORT:
                 let mergeAnimations = getMergeSortAnimations(this.state.array);
-                this.animateWithMerge(mergeAnimations, arrayOfBars, 2, 1);
+                this.animate(mergeAnimations, arrayOfBars, 2, 1, N_LOG_N);
+                break;
+            case QUICK_SORT:
+                console.log(getQuickSortArray(this.state.array));
+                let quickAnimations = getQuickSortAnimations(this.state.array);
+                this.animate(quickAnimations, arrayOfBars, 2.5, 1.2, N_LOG_N);
                 break;
         }
     }
@@ -222,8 +236,8 @@ export default class Graph extends React.Component {
     // Use for algorithms that compare and swap in-place
     // Bubble sort, Insertion sort, etc.
     animateWithSwap(animations, arrayOfBars, delay, exponent) {
-        let powerFactor = Math.pow(256/this.state.numRows, exponent);
-        let scaleFactor = 256/this.state.numRows;
+        let powerFactor = Math.pow(MAX_ROWS/this.state.numRows, exponent);
+        let scaleFactor = MAX_ROWS/this.state.numRows;
         let processingTime = animations.length/ANIMATIONS_PER_MS;
 
         for(let i = 0; i < animations.length; i++) {
@@ -267,8 +281,8 @@ export default class Graph extends React.Component {
 
     animateWithMerge(animations, arrayOfBars, delay, exponent) {
         let processingTime = animations.length/ANIMATIONS_PER_MS;
-        let scaleFactor = 256/this.state.numRows;
-        let timeFactor = Math.pow(scaleFactor * Math.log(256) / Math.log(this.state.numRows), exponent);
+        let scaleFactor = MAX_ROWS/this.state.numRows;
+        let timeFactor = Math.pow(scaleFactor * Math.log(MAX_ROWS) / Math.log(this.state.numRows), exponent);
 
         for(let i = 0; i < animations.length; i++) {
             let [index, changes, toggleColor] = animations[i];
@@ -279,28 +293,53 @@ export default class Graph extends React.Component {
                 }, i*timeFactor*delay + processingTime));
             } else {
                 timeouts.push(setTimeout(() => {
-                    arrayOfBars[index].style.height = `${changes*100/1024}%`;
+                    arrayOfBars[index].style.height = `${changes/1024*100}%`;
                 }, i*timeFactor*delay + processingTime));
             }
-            /*
-            if(i % 3 === 0) {
+        }
+
+        // Final sweep of green over sorted array
+        for(let i = 0; i < arrayOfBars.length; i++) {
+            timeouts.push(setTimeout(() => {
+                arrayOfBars[i].style.backgroundColor = SORTED_COLOR;
+            }, i*FINAL_PASS_DELAY*scaleFactor + animations.length*delay*timeFactor + processingTime));
+        }
+        // Re-enable buttons
+        timeouts.push(setTimeout(() => {
+            this.state.array.sort((a, b) => a - b);
+            this.setState({sorting: false});
+            timeouts = [];
+        }, arrayOfBars.length*FINAL_PASS_DELAY*scaleFactor + animations.length*delay*timeFactor + processingTime));
+    }
+
+    animate(animations, arrayOfBars, delay, exponent, efficiency) {
+        let processingTime = animations.length/ANIMATIONS_PER_MS;
+        let scaleFactor = MAX_ROWS/this.state.numRows;
+        let timeFactor;
+        switch(efficiency) {
+            // Defaults to O(n^2) efficiency
+            case N_SQUARED:
+            default:
+                timeFactor = Math.pow(scaleFactor*scaleFactor, exponent);
+                break;
+            case N_LOG_N:
+                timeFactor = Math.pow(scaleFactor*Math.log(MAX_ROWS)/ Math.log(this.state.numRows), exponent);
+                break;
+        }
+
+        for(let i = 0; i < animations.length; i++) {
+            let[indices, changes, trueColorFalseHeight] = animations[i];
+            if(trueColorFalseHeight) {
                 timeouts.push(setTimeout(() => {
-                    let [barOneIdx, barTwoIdx] = animations[i];
-                    arrayOfBars[barOneIdx].style.backgroundColor = COMPARISON_COLOR;
-                    arrayOfBars[barTwoIdx].style.backgroundColor = COMPARISON_COLOR;
-                }, i*timeFactor*delay + processingTime));
-            } else if(i % 3 === 1) {
-                timeouts.push(setTimeout(() => {
-                    let [barOneIdx, barTwoIdx] = animations[i];
-                    arrayOfBars[barOneIdx].style.backgroundColor = BAR_COLOR;
-                    arrayOfBars[barTwoIdx].style.backgroundColor = BAR_COLOR;
-                }, i*timeFactor*delay + processingTime));
+                    for(let j = 0; j < indices.length; j++)
+                        arrayOfBars[indices[j]].style.backgroundColor = changes[j];
+                }, i*delay*timeFactor + processingTime));
             } else {
                 timeouts.push(setTimeout(() => {
-                    let [barIdx, newHeight] = animations[i];
-                    arrayOfBars[barIdx].style.height = `${newHeight/10.24}%`;
-                }, i*timeFactor*delay + processingTime));
-            }*/
+                    for(let j = 0; j < indices.length; j++)
+                        arrayOfBars[indices[j]].style.height = `${changes[j]/MAX_HEIGHT*100}%`;
+                }, i*delay*timeFactor + processingTime));
+            }
         }
 
         // Final sweep of green over sorted array

@@ -77,26 +77,26 @@ function mergeAnimate(array, auxillaryArray, start, middle, end, animations) {
         // Four possibilities:
         // The first list has already been entirely merged
         if(headOne > middle) {
-            animations.push([headTwo, COMPARISON_COLOR, true]);        // Highlight the bar
-            animations.push([headTwo, BAR_COLOR, true]);        // Un-highlight the bar
+            animations.push([[headTwo], [COMPARISON_COLOR], true]);     // Highlight the bar
+            animations.push([[headTwo], [BAR_COLOR], true]);            // Un-highlight the bar
             auxillaryArray[i] = array[headTwo];
             headTwo++;
         // The second list has already been entirely merged
         } else if(headTwo > end) {
-            animations.push([headOne, COMPARISON_COLOR, true]);
-            animations.push([headOne, BAR_COLOR, true]);
+            animations.push([[headOne], [COMPARISON_COLOR], true]);
+            animations.push([[headOne], [BAR_COLOR], true]);
             auxillaryArray[i] = array[headOne];
             headOne++;
         // The head of the first list should go in next
         } else if(array[headOne] < array[headTwo]) {
-            animations.push([headOne, COMPARISON_COLOR, true]);
-            animations.push([headOne, BAR_COLOR, true]);
+            animations.push([[headOne], [COMPARISON_COLOR], true]);
+            animations.push([[headOne], [BAR_COLOR], true]);
             auxillaryArray[i] = array[headOne];
             headOne++;
         // The head of the second list should go in next
         } else {
-            animations.push([headTwo, COMPARISON_COLOR, true]);
-            animations.push([headTwo, BAR_COLOR, true]);
+            animations.push([[headTwo], [COMPARISON_COLOR], true]);
+            animations.push([[headTwo], [BAR_COLOR], true]);
             auxillaryArray[i] = array[headTwo];
             headTwo++;
         }
@@ -104,8 +104,8 @@ function mergeAnimate(array, auxillaryArray, start, middle, end, animations) {
     // Copy the merged arrays back into the original
     for(let i = start; i <= end; i++) {
         array[i] = auxillaryArray[i];
-        animations.push([i, SORTED_COLOR, true]);
-        animations.push([i, array[i], false]);
-        animations.push([i, BAR_COLOR, true]);
+        animations.push([[i], [SORTED_COLOR], true]);
+        animations.push([[i], [array[i]], false]);
+        animations.push([[i], [BAR_COLOR], true]);
     }
 }

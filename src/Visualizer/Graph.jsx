@@ -214,11 +214,11 @@ export default class Graph extends React.Component {
                 break;
             case BUBBLE_SORT:
                 let bubbleAnimations = getBubbleSortAnimations(this.state.array);
-                this.animateWithSwap(bubbleAnimations, arrayOfBars, 0.3, 1.8);
+                this.animate(bubbleAnimations, arrayOfBars, 0.3, 0.8, N_SQUARED);
                 break;
             case INSERTION_SORT:
                 let insertionAnimations = getInsertionSortAnimations(this.state.array);
-                this.animateWithSwap(insertionAnimations, arrayOfBars, 1, 1.5);
+                this.animate(insertionAnimations, arrayOfBars, 1, 0.8, N_SQUARED);
                 break;
             case MERGE_SORT:
                 let mergeAnimations = getMergeSortAnimations(this.state.array);
@@ -227,89 +227,9 @@ export default class Graph extends React.Component {
             case QUICK_SORT:
                 console.log(getQuickSortArray(this.state.array));
                 let quickAnimations = getQuickSortAnimations(this.state.array);
-                this.animate(quickAnimations, arrayOfBars, 2.5, 1.2, N_LOG_N);
+                this.animate(quickAnimations, arrayOfBars, 2, 1, N_LOG_N);
                 break;
         }
-    }
-
-    // Animations with format [number, number, boolean]
-    // Use for algorithms that compare and swap in-place
-    // Bubble sort, Insertion sort, etc.
-    animateWithSwap(animations, arrayOfBars, delay, exponent) {
-        let powerFactor = Math.pow(MAX_ROWS/this.state.numRows, exponent);
-        let scaleFactor = MAX_ROWS/this.state.numRows;
-        let processingTime = animations.length/ANIMATIONS_PER_MS;
-
-        for(let i = 0; i < animations.length; i++) {
-            // Indices of bars to process and whether to toggle color or swap
-            let [barOneIdx, barTwoIdx, toggleColor] = animations[i];
-            // Schedule color changes and swaps in order
-            // Delay duration scales with power function
-            // Essentially, a higher exponent slows smaller arrays down more
-            // If exponent is 2 and efficiency is O(n^2), all size arrays will take the same time to sort
-            // An exponent of 0 won't slow down smaller arrays at all
-            // Max size (256) arrays are unaffected by exponent
-            if(toggleColor) {
-                timeouts.push(setTimeout(() => {
-                    let newColor = arrayOfBars[barOneIdx].style.backgroundColor === COMPARISON_COLOR ? BAR_COLOR : COMPARISON_COLOR;
-                    arrayOfBars[barOneIdx].style.backgroundColor = newColor;
-                    arrayOfBars[barTwoIdx].style.backgroundColor = newColor;
-                }, i * delay * powerFactor + processingTime));
-            } else {
-                timeouts.push(setTimeout(() => {
-                    let temp = arrayOfBars[barOneIdx].style.height;
-                    arrayOfBars[barOneIdx].style.height = arrayOfBars[barTwoIdx].style.height;
-                    arrayOfBars[barTwoIdx].style.height = temp;
-                }, i * delay * powerFactor + processingTime));
-            }
-        }
-        // Sweeping animation to turn all bars green after all swaps completed
-        // Uses a direct proportion instead of power function so the screen is filled at a constant speed
-        for(let i = 0; i < arrayOfBars.length; i++) {
-            timeouts.push(setTimeout(() => {
-                arrayOfBars[i].style.backgroundColor = SORTED_COLOR;
-            }, (i*FINAL_PASS_DELAY*scaleFactor) + (animations.length*delay*powerFactor) + processingTime));
-        }
-        // Re-enable buttons and update state array to match the sorted one after everything is complete
-        // Slightly cheating by using built-in sorting algorithm, but whatever we already did the important part
-        timeouts.push(setTimeout(() => {
-            this.state.array.sort((a, b) => a - b);
-            this.setState({sorting: false});
-            timeouts = [];
-        }, (arrayOfBars.length*FINAL_PASS_DELAY*scaleFactor) + (animations.length*delay*powerFactor) + processingTime));
-    }
-
-    animateWithMerge(animations, arrayOfBars, delay, exponent) {
-        let processingTime = animations.length/ANIMATIONS_PER_MS;
-        let scaleFactor = MAX_ROWS/this.state.numRows;
-        let timeFactor = Math.pow(scaleFactor * Math.log(MAX_ROWS) / Math.log(this.state.numRows), exponent);
-
-        for(let i = 0; i < animations.length; i++) {
-            let [index, changes, toggleColor] = animations[i];
-
-            if(toggleColor) {
-                timeouts.push(setTimeout(() => {
-                    arrayOfBars[index].style.backgroundColor = changes;
-                }, i*timeFactor*delay + processingTime));
-            } else {
-                timeouts.push(setTimeout(() => {
-                    arrayOfBars[index].style.height = `${changes/1024*100}%`;
-                }, i*timeFactor*delay + processingTime));
-            }
-        }
-
-        // Final sweep of green over sorted array
-        for(let i = 0; i < arrayOfBars.length; i++) {
-            timeouts.push(setTimeout(() => {
-                arrayOfBars[i].style.backgroundColor = SORTED_COLOR;
-            }, i*FINAL_PASS_DELAY*scaleFactor + animations.length*delay*timeFactor + processingTime));
-        }
-        // Re-enable buttons
-        timeouts.push(setTimeout(() => {
-            this.state.array.sort((a, b) => a - b);
-            this.setState({sorting: false});
-            timeouts = [];
-        }, arrayOfBars.length*FINAL_PASS_DELAY*scaleFactor + animations.length*delay*timeFactor + processingTime));
     }
 
     animate(animations, arrayOfBars, delay, exponent, efficiency) {

@@ -1,3 +1,5 @@
+import {BAR_COLOR, COMPARISON_COLOR} from '../Visualizer/Graph'
+
 export function getBubbleSortArray(array) {
     let result = array.slice(0);
     for(let i = 0; i < result.length-1; i++) {
@@ -18,12 +20,12 @@ export function getBubbleSortAnimations(array) {
             // Blocks of information with three parts: 
             // Two indices to consider and whether to change color or swap
             // true: toggle colors, false: swap heights
-            animations.push([j, j+1, true]);
+            animations.push([[j, j+1], [COMPARISON_COLOR, COMPARISON_COLOR], true]);
             if(temp[j] > temp[j+1]) {
-                animations.push([j, j+1, false]);
+                animations.push([[j, j+1], [temp[j+1], temp[j]], false]);
                 swap(temp, j, j+1);
             }
-            animations.push([j, j+1, true]);
+            animations.push([[j, j+1], [BAR_COLOR, BAR_COLOR], true]);
         }
     }
     return animations;

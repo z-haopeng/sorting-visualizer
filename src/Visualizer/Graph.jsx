@@ -167,14 +167,16 @@ export default class Graph extends React.Component {
 
     componentDidMount() {
         this.resetArray();
-        window.addEventListener('resize', this.handleResize);
+        window.addEventListener('resize', () => this.handleResize());
+        document.addEventListener('keydown', (event) => this.escapeAnimation(event));
     }
 
     componentWillUnmount() {
-        window.removeEventListener('resize', this.handleResize);
+        window.removeEventListener('resize', () => this.handleResize());
+        document.removeEventListener('keydown', (event) => this.escapeAnimation(event));
     }
 
-    handleResize = e => {
+    handleResize() {
         if(this.state.isLandscape !== (window.innerWidth > window.innerHeight)) {
             this.setState({numRows: 64, algorithm: BUBBLE_SORT, sorting: false});
             for(let i = 0; i < timeouts.length; i++) {
@@ -188,6 +190,22 @@ export default class Graph extends React.Component {
 
     changeAlgorithm(event) {
         this.setState({algorithm: event.target.value});
+    }
+
+    escapeAnimation(event) {
+        if(event.key === 'Escape' && this.state.sorting) {
+            for(let i = 0; i < timeouts.length; i++) {
+                clearTimeout(timeouts[i]);
+            }
+            timeouts = [];
+            this.state.array.sort((a, b) => a - b);
+            let arrayOfBars = document.getElementsByClassName('bar');
+            for(let i = 0; i < arrayOfBars.length; i++) {
+                arrayOfBars[i].style.height = `${this.state.array[i]*100/MAX_HEIGHT}%`
+                arrayOfBars[i].style.backgroundColor = SORTED_COLOR;
+            }
+            this.setState({sorting: false});
+        }
     }
 
     resetArray() {
